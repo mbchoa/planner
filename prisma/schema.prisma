@@ -1,26 +1,18 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
 
 generator client {
     provider = "prisma-client-js"
 }
 
-datasource db {
-    provider = "postgresql"
-    // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
-}
-
-// Necessary for Next auth
 model Account {
     id                String  @id @default(cuid())
-    userId            String
+    userId            String  @map("user_id")
     type              String
     provider          String
-    providerAccountId String
+    providerAccountId String  @map("provider_account_id")
     refresh_token     String? @db.Text
     access_token      String? @db.Text
     expires_at        Int?
@@ -28,29 +20,37 @@ model Account {
     scope             String?
     id_token          String? @db.Text
     session_state     String?
-    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([provider, providerAccountId])
+    @@map("accounts")
 }
 
 model Session {
     id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
+    sessionToken String   @unique @map("session_token")
+    userId       String   @map("user_id")
     expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("sessions")
 }
 
 model User {
     id            String    @id @default(cuid())
     name          String?
     email         String?   @unique
-    emailVerified DateTime?
+    emailVerified DateTime? @map("email_verified")
     image         String?
-    accounts      Account[]
-    sessions      Session[]
-    taskLists     TaskList[]
-    tasks         Task[]
+
+    accounts  Account[]
+    sessions  Session[]
+    taskLists TaskList[]
+    tasks     Task[]
+
+    @@map("users")
 }
 
 model VerificationToken {
@@ -59,28 +59,33 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+    @@map("verificationtokens")
 }
 
 model TaskList {
-  id       String @id
-  name     String
-  userId   String
-  user     User   @relation(fields: [userId], references: [id])
-  tasks    Task[]
+    id     String @id @default(cuid()) @map("task_list_id")
+    name   String
+    userId String @map("user_id")
 
-	@@index([userId])
+    user  User   @relation(fields: [userId], references: [id])
+    tasks Task[]
+
+    @@index([userId])
+    @@map("task_lists")
 }
 
 model Task {
-  id            String     @id
-  userId       String
-  user          User       @relation(fields: [userId], references: [id])
-  taskListId    String
-  taskList      TaskList   @relation(fields: [taskListId], references: [id])
-  createdAt    DateTime
-  completedAt  DateTime?
-  description   String
-  completed     Boolean
+    id          String    @id @default(cuid()) @map("task_id")
+    userId      String    @map("user_id")
+    taskListId  String    @map("task_list_id")
+    description String
+    completed   Boolean   @default(false)
+    createdAt   DateTime  @map("created_at")
+    completedAt DateTime? @map("compelted_at")
 
-	@@index([taskListId])
+    user     User     @relation(fields: [userId], references: [id])
+    taskList TaskList @relation(fields: [taskListId], references: [id])
+
+    @@index([taskListId])
+    @@map("tasks")
 }
