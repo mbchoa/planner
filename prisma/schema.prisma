@@ -63,9 +63,10 @@ model VerificationToken {
 }
 
 model TaskList {
-    id     String @id @default(cuid()) @map("task_list_id")
-    name   String
-    userId String @map("user_id")
+    id        String   @id @default(cuid()) @map("task_list_id")
+    name      String
+    userId    String   @map("user_id")
+    createdAt DateTime @default(now()) @map("created_at")
 
     user  User   @relation(fields: [userId], references: [id])
     tasks Task[]
@@ -80,7 +81,7 @@ model Task {
     taskListId  String    @map("task_list_id")
     description String
     completed   Boolean   @default(false)
-    createdAt   DateTime  @map("created_at")
+    createdAt   DateTime  @default(now()) @map("created_at")
     completedAt DateTime? @map("compelted_at")
 
     user     User     @relation(fields: [userId], references: [id])
